@@ -15,11 +15,15 @@ def register():
     if not data:
         return jsonify({"error": "Request body must be JSON"}), 400
 
+    name = data.get("name")
     email = data.get("email")
     password = data.get("password")
+    phone = data.get("phone", "")
+    status = data.get("status", "activo")
 
-    if not email or not password:
-        return jsonify({"error": "Email and password are required"}), 400
+    if not name or not email or not password:
+        return jsonify({"error": "Name, email and password are required"}), 400
+    
 
     try:
         conn = mysql.connector.connect(
@@ -39,7 +43,10 @@ def register():
         # Hashear la contraseña antes de guardar
         hashed_pwd = hash_password(password)
 
-        cursor.execute("INSERT INTO users (email, password) VALUES (%s, %s)", (email, hashed_pwd))
+        cursor.execute(
+                    "INSERT INTO users (name, email, password, phone, status) VALUES (%s, %s, %s, %s, %s)",
+                    (name, email, hashed_pwd, phone, status)
+                        )
         conn.commit()
 
         return jsonify({"message": "User registered successfully"}), 201
