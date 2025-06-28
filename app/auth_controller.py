@@ -81,7 +81,7 @@ def login():
             "user_id": user["id"],
             "email": user["email"],
             "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        }, Config.SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
+        }, Config.JWT_SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
 
         return jsonify({"token": token})
 

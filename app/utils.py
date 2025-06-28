@@ -1,11 +1,14 @@
+# app/utils.py
+
 import bcrypt
 
-# Función para hashear contraseñas
-def hash_password(password: str) -> str:
-    # bcrypt genera una sal aleatoria internamente
-    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    return hashed.decode('utf-8')  # Almacenamos como string
+def hash_password(password):
+    """Hashea una contraseña utilizando bcrypt."""
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
-# Función para validar contraseñas
-def validate_password(input_password: str, stored_hashed_password: str) -> bool:
-    return bcrypt.checkpw(input_password.encode('utf-8'), stored_hashed_password.encode('utf-8'))
+def validate_password(password, hashed_password):
+    """Verifica si la contraseña proporcionada coincide con el hash."""
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+
