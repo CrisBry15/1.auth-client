@@ -1,19 +1,15 @@
-from flask import Blueprint, request, jsonify
-from .auth import login_user, create_user
+# app/routes.py
 
-auth_bp = Blueprint('auth', __name__)
+from flask import Blueprint, jsonify
+from app.auth_controller import login
 
+auth_bp = Blueprint('auth', __name__)  # Blueprint con prefijo /auth
+
+@auth_bp.route('/', methods=['GET'])   # La ruta raíz del blueprint
+def home():
+    return jsonify({"message": "Auth Client Microservice funcionando correctamente"})
+
+# Ruta de login (POST)
 @auth_bp.route('/login', methods=['POST'])
-def login():
-    data = request.get_json() # Obtener los datos del cuerpo de la solicitud
-    username = data.get("username")
-    password = data.get("password")
-    return login_user(username, password)
-
-# Ruta para registrar un nuevo usuario (opcional)
-@auth_bp.route('/register', methods=['POST'])
-def register():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
-    return create_user(username, password)
+def login_route():
+    return login()
