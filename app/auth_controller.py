@@ -1,37 +1,93 @@
 from flask import request, jsonify
-from app.models import User
-from app.utils import validate_password
 from config import Config
+from app.utils import hash_password, validate_password
+import mysql.connector
 import jwt
 import datetime
 
-# Controlador de autenticación
-def login():
-    data = request.get_json()
+# Función para registrar un nuevo usuario
+def register():
+    data = request.get_json(silent=True)
+    
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
 
-    if not data or not data.get('email') or not data.get('password'):
-        return jsonify({"error": "Email y contraseña son requeridos"}), 400
+    email = data.get("email")
+    password = data.get("password")
 
-    email = data.get('email')
-    password = data.get('password')
-
-    # Simulación de búsqueda de usuario en la base de datos
-    # Aquí en producción deberías hacer una consulta real
-    dummy_user = User(email="admin@example.com", password="$2b$12$YwO87s7tT5dNkJJXStwCMevaFw4gUx1/h5kUmFYvwuxn4Zugprb6a")  # hash para "admin123"
-
-    if dummy_user.email != email:
-        return jsonify({"error": "Usuario no encontrado"}), 404
-
-    if not validate_password(password, dummy_user.password):
-        return jsonify({"error": "Contraseña incorrecta"}), 401
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
 
     try:
-        payload = {
-            'email': dummy_user.email,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        }
-        token = jwt.encode(payload, Config.JWT_SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
-        return jsonify({"token": token}), 200
+        conn = mysql.connector.connect(
+            host=Config.MYSQL_HOST,
+            user=Config.MYSQL_USER,
+            password=Config.MYSQL_PASSWORD,
+            database=Config.MYSQL_DB,
+            port=Config.MYSQL_PORT
+        )
+        cursor = conn.cursor()
 
-    except Exception as e:
-        return jsonify({"error": "Error al generar el token"}), 500
+        # Verificar si el email ya está registrado
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            return jsonify({"error": "Email already registered"}), 409
+
+        # Hashear la contraseña antes de guardar
+        hashed_pwd = hash_password(password)
+
+        cursor.execute("INSERT INTO users (email, password) VALUES (%s, %s)", (email, hashed_pwd))
+        conn.commit()
+
+        return jsonify({"message": "User registered successfully"}), 201
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": f"MySQL Error: {err}"}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+
+# Función para login real desde base de datos
+def login():
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({"error": "Request body must be in JSON format"}), 400
+
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+
+    try:
+        conn = mysql.connector.connect(
+            host=Config.MYSQL_HOST,
+            user=Config.MYSQL_USER,
+            password=Config.MYSQL_PASSWORD,
+            database=Config.MYSQL_DB,
+            port=Config.MYSQL_PORT
+        )
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, email, password FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+
+        if not user or not validate_password(password, user["password"]):
+            return jsonify({"error": "Invalid email or password"}), 401
+
+        token = jwt.encode({
+            "user_id": user["id"],
+            "email": user["email"],
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        }, Config.SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
+
+        return jsonify({"token": token})
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": f"MySQL error: {err}"}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()

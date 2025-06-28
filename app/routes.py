@@ -1,11 +1,11 @@
-# app/routes.py
-
 from flask import Blueprint, jsonify
-from app.auth_controller import login
+from app.auth_controller import login, register
 
-auth_bp = Blueprint('auth', __name__)  # Blueprint con prefijo /auth
+# Definir blueprint para el microservicio auth-client
+auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/', methods=['GET'])   # La ruta raíz del blueprint
+# Ruta de prueba (GET)
+@auth_bp.route('/', methods=['GET'])
 def home():
     return jsonify({"message": "Auth Client Microservice funcionando correctamente"})
 
@@ -13,3 +13,8 @@ def home():
 @auth_bp.route('/login', methods=['POST'])
 def login_route():
     return login()
+
+# Ruta de registro (POST)
+@auth_bp.route('/register', methods=['POST'])
+def register_route():
+    return register()
