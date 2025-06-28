@@ -44,9 +44,15 @@ def register():
     except mysql.connector.Error as err:
         return jsonify({"error": f"MySQL Error: {err}"}), 500
     finally:
-        if conn.is_connected():
-            cursor.close()
-            conn.close()
+        if 'conn' in locals():
+            try:
+                if conn.is_connected():
+                    cursor.close()
+                    conn.close()
+            except:
+                pass
+
+
 
 
 # Función para login real desde base de datos
@@ -88,6 +94,10 @@ def login():
     except mysql.connector.Error as err:
         return jsonify({"error": f"MySQL error: {err}"}), 500
     finally:
-        if conn.is_connected():
-            cursor.close()
-            conn.close()
+        if 'conn' in locals():
+            try:
+                if conn.is_connected():
+                    cursor.close()
+                    conn.close()
+            except:
+                pass
