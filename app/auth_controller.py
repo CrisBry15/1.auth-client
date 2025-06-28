@@ -5,6 +5,9 @@ import mysql.connector
 import jwt
 import datetime
 
+from flask_jwt_extended import create_access_token
+
+
 # Función para registrar un nuevo usuario
 def register():
     data = request.get_json(silent=True)
@@ -53,8 +56,6 @@ def register():
                 pass
 
 
-
-
 # Función para login real desde base de datos
 def login():
     data = request.get_json(silent=True)
@@ -83,11 +84,7 @@ def login():
         if not user or not validate_password(password, user["password"]):
             return jsonify({"error": "Invalid email or password"}), 401
 
-        token = jwt.encode({
-            "user_id": user["id"],
-            "email": user["email"],
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        }, Config.JWT_SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
+        token = create_access_token(identity=str(user["id"]), additional_claims={"email": user["email"]})
 
         return jsonify({"token": token})
 

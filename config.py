@@ -12,3 +12,8 @@ class Config:
     MYSQL_DB = os.getenv("MYSQL_DB")
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "secret_default")  
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+
+
+    JWT_TOKEN_LOCATION = ["headers"]
+    JWT_HEADER_NAME = "Authorization"
+    JWT_HEADER_TYPE = "Bearer"
