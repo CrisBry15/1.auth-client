@@ -1,12 +1,10 @@
 from flask import Flask
 from config import Config
 from app.routes import auth_bp
-
 from flask_jwt_extended import JWTManager
 
-
 def create_app():
-    app = Flask(__name__)  # Corrección aquí
+    app = Flask(__name__)
 
     # Carga de configuración desde config.py
     app.config.from_object(Config)

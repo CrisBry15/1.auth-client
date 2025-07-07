@@ -20,6 +20,7 @@ WORKDIR /app
 
 # Copiar todo el contenido del proyecto al contenedor
 COPY . .
+COPY .env .env
 
 # Instalar dependencias Python
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
